@@ -1,0 +1,13 @@
+version: '3.8'
+
+services:
+  cpp-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - .:/usr/src/app
+    ports:
+      - "8080:8080"  # Example port binding; adjust as needed
+    stdin_open: true  # Keep stdin open so you can interact with the container
+    tty: true         # Allocate a pseudo-TTY for interactive commands
