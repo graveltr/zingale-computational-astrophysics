@@ -32,8 +32,33 @@ constexpr double PI = 3.14159265358979323846;
  * single orbit.
  */
 
-void dumpMatrixToFile(std::vector<std::vector<double>>& matrix) {
-  std::string filename = "output.txt";
+// Overload operator* to scale a vector by a double (scalar)
+std::vector<double> operator*(const std::vector<double>& vec, double scalar) {
+    std::vector<double> result(vec.size());
+    for (size_t i = 0; i < vec.size(); ++i) {
+        result[i] = vec[i] * scalar;
+    }
+    return result;
+}
+
+// Overload operator* to scale a vector by a double (scalar) - other direction
+std::vector<double> operator*(double scalar, const std::vector<double>& vec) {
+    return vec * scalar;
+}
+
+// Function to add two vectors element-wise
+std::vector<double> operator+(const std::vector<double>& a, const std::vector<double>& b) {
+    if (a.size() != b.size()) {
+        throw std::invalid_argument("Vectors must be of the same size");
+    }
+    std::vector<double> result(a.size());
+    for (size_t i = 0; i < a.size(); ++i) {
+        result[i] = a[i] + b[i];
+    }
+    return result;
+}
+
+void dumpMatrixToFile(std::vector<std::vector<double>>& matrix, std::string filename) {
   std::ofstream outFile(filename);
   
   if (!outFile) {
@@ -55,50 +80,37 @@ void dumpMatrixToFile(std::vector<std::vector<double>>& matrix) {
   }
 }
 
+std::vector<double> evaluateF(const std::vector<double>& vec) {
+  double x = vec[0];
+  double y = vec[1];
+  double vx = vec[2];
+  double vy = vec[3];
+
+  double r = std::sqrt(x * x + y * y);
+
+  std::vector<double> ret({
+    vx,
+    vy, 
+    -1.0 * (4.0 * PI * PI * x) / (r * r * r),
+    -1.0 * (4.0 * PI * PI * y) / (r * r * r)
+  });
+
+  return ret;
+}
+
 std::vector<double> computeVecYNPlusOneEuler(std::vector<double>& vecYN, double deltaT) {
-  std::vector<double> vecYNPlusOne(vecYN.size());
-  
-  double xN = vecYN[0];
-  double yN = vecYN[1];
-  double vxN = vecYN[2];
-  double vyN = vecYN[3];
-
-  double r = std::sqrt(xN * xN + yN * yN);
-
-  double xNPlus1 = xN + vxN * deltaT;
-  double yNPlus1 = yN + vyN * deltaT;
-  double vxNPlus1 = vxN - deltaT * (4.0 * PI * PI * xN) / (r * r * r);
-  double vyNPlus1 = vyN - deltaT * (4.0 * PI * PI * yN) / (r * r * r);
-
-  vecYNPlusOne[0] = xNPlus1;
-  vecYNPlusOne[1] = yNPlus1;
-  vecYNPlusOne[2] = vxNPlus1;
-  vecYNPlusOne[3] = vyNPlus1;
-
-  return vecYNPlusOne;
+  return vecYN + deltaT * evaluateF(vecYN);
 }
 
 std::vector<double> computeVecYNPlusOneRK(std::vector<double>& vecYN, double deltaT) {
-  std::vector<double> vecYNPlusOne(vecYN.size());
-  
-  double xN = vecYN[0];
-  double yN = vecYN[1];
-  double vxN = vecYN[2];
-  double vyN = vecYN[3];
+  std::vector<double> k1, k2, k3, k4;
 
-  double r = std::sqrt(xN * xN + yN * yN);
+  k1 = evaluateF(vecYN);
+  k2 = evaluateF(vecYN + ((deltaT / 2.0) * k1));
+  k3 = evaluateF(vecYN + ((deltaT / 2.0) * k2));
+  k4 = evaluateF(vecYN + deltaT * k3);
 
-  double xNPlus1 = xN + vxN * deltaT;
-  double yNPlus1 = yN + vyN * deltaT;
-  double vxNPlus1 = vxN - deltaT * (4.0 * PI * PI * xN) / (r * r * r);
-  double vyNPlus1 = vyN - deltaT * (4.0 * PI * PI * yN) / (r * r * r);
-
-  vecYNPlusOne[0] = xNPlus1;
-  vecYNPlusOne[1] = yNPlus1;
-  vecYNPlusOne[2] = vxNPlus1;
-  vecYNPlusOne[3] = vyNPlus1;
-
-  return vecYNPlusOne;
+  return vecYN + (deltaT / 6.0) * (k1 + 2.0 * k2 + 2.0 * k3 + k4);
 }
 
 int main() {
@@ -122,8 +134,18 @@ int main() {
     currT += deltaT;
     std::cout << currT << std::endl;
   }
+  dumpMatrixToFile(vecY, "euler-output.txt");
 
-  dumpMatrixToFile(vecY);
+  currT = 0.0;
+  vecY.clear();
+  vecY.push_back({x0, y0, vx0, vy0});
+  while (currT < tMax) {
+    vecY.push_back(computeVecYNPlusOneRK(vecY.back(), deltaT));
+    currT += deltaT;
+    std::cout << currT << std::endl;
+  }
+  dumpMatrixToFile(vecY, "rk-output.txt");
+
   return 0;
 }
 

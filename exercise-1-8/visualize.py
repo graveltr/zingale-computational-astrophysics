@@ -23,25 +23,42 @@ def keep_every_nth_frame(xpos, ypos, n):
 
 # Main function
 def main():
-    filename = 'output.txt'  # The name of the file containing particle data
-    xpos, ypos = read_particle_data(filename)
-
-    # Delete every nth frame (example: every 3rd frame)
+    # Filenames of the particle data files
+    filename1 = 'rk-output.txt'
+    filename2 = 'euler-output.txt'
+    
+    # Read data for the two particles
+    xpos1, ypos1 = read_particle_data(filename1)
+    xpos2, ypos2 = read_particle_data(filename2)
+    
+    # Keep every nth frame (example: every 3rd frame)
     n = 100
-    xpos, ypos = keep_every_nth_frame(xpos, ypos, n)
-
-    fig, ax = plt.subplots()
-    ax.set_xlim((min(xpos) * 1.1), (max(xpos) * 1.1))
-    ax.set_ylim((min(ypos) * 1.1), (max(ypos) * 1.1))
-    ax.set_xlabel('X Position')
-    ax.set_ylabel('Y Position')
-    ax.set_title('Particle Trajectory')
-
-    line, = ax.plot([], [], lw=2)
-
-    ani = animation.FuncAnimation(fig, animate, fargs=(xpos, ypos, line),
-                                  frames=len(xpos), interval=1, blit=True)
-
+    xpos1, ypos1 = keep_every_nth_frame(xpos1, ypos1, n)
+    xpos2, ypos2 = keep_every_nth_frame(xpos2, ypos2, n)
+    
+    fig, (ax1, ax2) = plt.subplots(1, 2)  # Create side-by-side subplots
+    
+    # Set up the first subplot for particle 1
+    ax1.set_xlim((min(xpos1) * 1.1), (max(xpos1) * 1.1))
+    ax1.set_ylim((min(ypos1) * 1.1), (max(ypos1) * 1.1))
+    ax1.set_xlabel('X Position')
+    ax1.set_ylabel('Y Position')
+    ax1.set_title('Particle 1 Trajectory')
+    line1, = ax1.plot([], [], lw=2)
+    
+    # Set up the second subplot for particle 2
+    ax2.set_xlim((min(xpos2) * 1.1), (max(xpos2) * 1.1))
+    ax2.set_ylim((min(ypos2) * 1.1), (max(ypos2) * 1.1))
+    ax2.set_xlabel('X Position')
+    ax2.set_ylabel('Y Position')
+    ax2.set_title('Particle 2 Trajectory')
+    line2, = ax2.plot([], [], lw=2)
+    
+    # Create the animation for both particles
+    ani1 = animation.FuncAnimation(fig, animate, fargs=(xpos1, ypos1, line1), frames=len(xpos1), interval=10, blit=True)
+    ani2 = animation.FuncAnimation(fig, animate, fargs=(xpos2, ypos2, line2), frames=len(xpos2), interval=10, blit=True)
+    
+    plt.tight_layout()
     plt.show()
 
 if __name__ == '__main__':
